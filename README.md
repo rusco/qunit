@@ -12,4 +12,4 @@
 
 This is a first alpha relase, only some parts of the API have been tested ! 
 
-Look at the examples folder for a sample usage.
+Look at the example folder for a sample usage.
