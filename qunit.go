@@ -3,13 +3,9 @@ package qunit
 //GopherJS Bindings for qunitjs.com
 import "github.com/neelance/gopherjs/js"
 
-func init() {
-
-}
-
 type QUnitAssert struct {
 	js.Object
-	//assert                  js.Object
+	//assert                  js.Object//2do
 	//current_testEnvironment js.Object
 	//jsDump                  js.Object
 }
