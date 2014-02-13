@@ -6,7 +6,7 @@
 
 ### Links
 - QUnit, A Javascript Unit Testing Framework (http://qunitjs.com/)
-- GopherJS, A Golang to Javascript Transpiler (https://github.com/neelance/gopherjs)
+- GopherJS, A Golang to Javascript Transpiler (https://github.com/gopherjs/gopherjs)
 
 ### Attention: 
 

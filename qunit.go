@@ -1,7 +1,7 @@
 package qunit
 
 //GopherJS Bindings for qunitjs.com
-import "github.com/neelance/gopherjs/js"
+import "github.com/gopherjs/gopherjs/js"
 
 type QUnitAssert struct {
 	js.Object
@@ -195,7 +195,7 @@ func Module(name string) interface{} {
 }
 
 /*
-2do: implement this:
+2do: 
 func ModuleLifecycle(name string, lifecycle LifecycleObject) interface{} {
 	return js.Global("QUnit").Call("module", name, lifecycle)
 }
