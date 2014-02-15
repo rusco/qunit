@@ -3439,6 +3439,9 @@ go$packages["github.com/rusco/qunit"] = (function() {
 	TestStartCallbackObject.prototype.String = function() { return this.go$val.String(); };
 	TestStartCallbackObject.Ptr.prototype.String = function() { return this.Object.String(); };
 	go$pkg.TestStartCallbackObject = TestStartCallbackObject;
+	var Lifecycle;
+	Lifecycle = go$newType(0, "Interface", "qunit.Lifecycle", "Lifecycle", "github.com/rusco/qunit", null);
+	go$pkg.Lifecycle = Lifecycle;
 	var Raises;
 	Raises = go$newType(0, "Struct", "qunit.Raises", "Raises", "github.com/rusco/qunit", function(Object_, Raises_) {
 		this.go$val = this;
@@ -3497,6 +3500,7 @@ go$packages["github.com/rusco/qunit"] = (function() {
 	TestStartCallbackObject.init([["", "", js.Object, ""], ["name", "github.com/rusco/qunit", Go$String, "js:\"name\""], ["module", "github.com/rusco/qunit", Go$String, "js:\"module\""]]);
 	TestStartCallbackObject.methods = [["Bool", "", [], [Go$Bool], false], ["Call", "", [Go$String, (go$sliceType(go$emptyInterface))], [js.Object], true], ["Float", "", [], [Go$Float64], false], ["Get", "", [Go$String], [js.Object], false], ["Index", "", [Go$Int], [js.Object], false], ["Int", "", [], [Go$Int], false], ["Interface", "", [], [go$emptyInterface], false], ["Invoke", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["IsNull", "", [], [Go$Bool], false], ["IsUndefined", "", [], [Go$Bool], false], ["Length", "", [], [Go$Int], false], ["New", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["Set", "", [Go$String, go$emptyInterface], [], false], ["SetIndex", "", [Go$Int, go$emptyInterface], [], false], ["String", "", [], [Go$String], false]];
 	(go$ptrType(TestStartCallbackObject)).methods = [["Bool", "", [], [Go$Bool], false], ["Call", "", [Go$String, (go$sliceType(go$emptyInterface))], [js.Object], true], ["Float", "", [], [Go$Float64], false], ["Get", "", [Go$String], [js.Object], false], ["Index", "", [Go$Int], [js.Object], false], ["Int", "", [], [Go$Int], false], ["Interface", "", [], [go$emptyInterface], false], ["Invoke", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["IsNull", "", [], [Go$Bool], false], ["IsUndefined", "", [], [Go$Bool], false], ["Length", "", [], [Go$Int], false], ["New", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["Set", "", [Go$String, go$emptyInterface], [], false], ["SetIndex", "", [Go$Int, go$emptyInterface], [], false], ["String", "", [], [Go$String], false]];
+	Lifecycle.init([["Setup", "", (go$funcType([], [], false))], ["Teardown", "", (go$funcType([], [], false))]]);
 	Raises.init([["", "", js.Object, ""], ["Raises", "", js.Object, "js:\"raises\""]]);
 	Raises.methods = [["Bool", "", [], [Go$Bool], false], ["Call", "", [Go$String, (go$sliceType(go$emptyInterface))], [js.Object], true], ["Float", "", [], [Go$Float64], false], ["Get", "", [Go$String], [js.Object], false], ["Index", "", [Go$Int], [js.Object], false], ["Int", "", [], [Go$Int], false], ["Interface", "", [], [go$emptyInterface], false], ["Invoke", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["IsNull", "", [], [Go$Bool], false], ["IsUndefined", "", [], [Go$Bool], false], ["Length", "", [], [Go$Int], false], ["New", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["Set", "", [Go$String, go$emptyInterface], [], false], ["SetIndex", "", [Go$Int, go$emptyInterface], [], false], ["String", "", [], [Go$String], false]];
 	(go$ptrType(Raises)).methods = [["Bool", "", [], [Go$Bool], false], ["Call", "", [Go$String, (go$sliceType(go$emptyInterface))], [js.Object], true], ["Float", "", [], [Go$Float64], false], ["Get", "", [Go$String], [js.Object], false], ["Index", "", [Go$Int], [js.Object], false], ["Int", "", [], [Go$Int], false], ["Interface", "", [], [go$emptyInterface], false], ["Invoke", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["IsNull", "", [], [Go$Bool], false], ["IsUndefined", "", [], [Go$Bool], false], ["Length", "", [], [Go$Int], false], ["New", "", [(go$sliceType(go$emptyInterface))], [js.Object], true], ["Set", "", [Go$String, go$emptyInterface], [], false], ["SetIndex", "", [Go$Int, go$emptyInterface], [], false], ["String", "", [], [Go$String], false]];
@@ -3661,6 +3665,28 @@ go$packages["github.com/rusco/qunit"] = (function() {
 	};
 	var Module = go$pkg.Module = function(name) {
 		return go$global.QUnit.module(go$externalize(name, Go$String));
+	};
+	var ModuleLifecycle = go$pkg.ModuleLifecycle = function(name, lc) {
+		var o, _recv, _recv$1, _recv$2, _recv$3;
+		o = new go$global.Object();
+		if (!((_recv = lc, function() { return _recv.Setup(); }) === go$throwNilPointerError)) {
+			o.setup = go$externalize((_recv$1 = lc, function() { return _recv$1.Setup(); }), (go$funcType([], [], false)));
+		}
+		if (!((_recv$2 = lc, function() { return _recv$2.Teardown(); }) === go$throwNilPointerError)) {
+			o.teardown = go$externalize((_recv$3 = lc, function() { return _recv$3.Teardown(); }), (go$funcType([], [], false)));
+		}
+		return go$global.QUnit.module(go$externalize(name, Go$String), o);
+	};
+	var ModuleLifecycle___Works = go$pkg.ModuleLifecycle___Works = function(name, setup, teardown) {
+		var o;
+		o = new go$global.Object();
+		if (!(setup === go$throwNilPointerError)) {
+			o.setup = go$externalize(setup, (go$funcType([], [], false)));
+		}
+		if (!(teardown === go$throwNilPointerError)) {
+			o.teardown = go$externalize(teardown, (go$funcType([], [], false)));
+		}
+		return go$global.QUnit.module(go$externalize(name, Go$String), o);
 	};
 	var Push = go$pkg.Push = function(result, actual, expected, message) {
 		return go$global.QUnit.push(go$externalize(result, go$emptyInterface), go$externalize(actual, go$emptyInterface), go$externalize(expected, go$emptyInterface), go$externalize(message, Go$String));
@@ -8345,8 +8371,29 @@ go$packages["main"] = (function() {
 	var go$pkg = {};
 	var qunit = go$packages["github.com/rusco/qunit"];
 	var strconv = go$packages["strconv"];
+	var Scenario;
+	Scenario = go$newType(0, "Struct", "test.Scenario", "Scenario", "main", function() {
+		this.go$val = this;
+	});
+	go$pkg.Scenario = Scenario;
+	Scenario.init([]);
+	Scenario.methods = [["Setup", "", [], [], false], ["Teardown", "", [], [], false]];
+	(go$ptrType(Scenario)).methods = [["Setup", "", [], [], false], ["Teardown", "", [], [], false]];
+	Scenario.Ptr.prototype.Setup = function() {
+		var _struct, s;
+		s = (_struct = this, new Scenario.Ptr());
+		console.log(" s 3");
+	};
+	Scenario.prototype.Setup = function() { return this.go$val.Setup(); };
+	Scenario.Ptr.prototype.Teardown = function() {
+		var _struct, s;
+		s = (_struct = this, new Scenario.Ptr());
+		console.log(" s 4");
+	};
+	Scenario.prototype.Teardown = function() { return this.go$val.Teardown(); };
 	var main = go$pkg.main = function() {
-		qunit.Module("A");
+		var x;
+		qunit.ModuleLifecycle("A", (x = new Scenario.Ptr(), new x.constructor.Struct(x)));
 		qunit.Test("just a test", (function(assert) {
 			qunit.Expect(1);
 			assert.Ok(new Go$Bool(true), "");
@@ -8354,8 +8401,8 @@ go$packages["main"] = (function() {
 		qunit.Module("B");
 		qunit.Test("test 1", (function(assert) {
 			var square, result;
-			square = (function(x) {
-				return (((x >>> 16 << 16) * x >> 0) + (x << 16 >>> 16) * x) >> 0;
+			square = (function(x$1) {
+				return (((x$1 >>> 16 << 16) * x$1 >> 0) + (x$1 << 16 >>> 16) * x$1) >> 0;
 			});
 			result = square(2);
 			assert.Equal(new Go$String(strconv.Itoa(result)), new Go$String(strconv.Itoa(4)), "square(2) equals 4");
@@ -8376,6 +8423,7 @@ go$error.implementedBy = [go$packages["errors"].errorString.Ptr, go$packages["gi
 go$packages["runtime"].Error.implementedBy = [go$packages["runtime"].TypeAssertionError.Ptr, go$packages["runtime"].errorCString, go$packages["runtime"].errorString, go$ptrType(go$packages["runtime"].errorCString), go$ptrType(go$packages["runtime"].errorString)];
 go$packages["runtime"].stringer.implementedBy = [go$packages["github.com/gopherjs/gopherjs/js"].Error, go$packages["github.com/gopherjs/gopherjs/js"].Error.Ptr, go$packages["github.com/rusco/qunit"].DoneCallbackObject, go$packages["github.com/rusco/qunit"].DoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].LogCallbackObject, go$packages["github.com/rusco/qunit"].LogCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].ModuleDoneCallbackObject, go$packages["github.com/rusco/qunit"].ModuleDoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].ModuleStartCallbackObject, go$packages["github.com/rusco/qunit"].ModuleStartCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].QUnitAssert, go$packages["github.com/rusco/qunit"].QUnitAssert.Ptr, go$packages["github.com/rusco/qunit"].Raises, go$packages["github.com/rusco/qunit"].Raises.Ptr, go$packages["github.com/rusco/qunit"].TestDoneCallbackObject, go$packages["github.com/rusco/qunit"].TestDoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].TestStartCallbackObject, go$packages["github.com/rusco/qunit"].TestStartCallbackObject.Ptr, go$packages["strconv"].decimal.Ptr];
 go$packages["github.com/gopherjs/gopherjs/js"].Object.implementedBy = [go$packages["github.com/gopherjs/gopherjs/js"].Error, go$packages["github.com/gopherjs/gopherjs/js"].Error.Ptr, go$packages["github.com/rusco/qunit"].DoneCallbackObject, go$packages["github.com/rusco/qunit"].DoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].LogCallbackObject, go$packages["github.com/rusco/qunit"].LogCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].ModuleDoneCallbackObject, go$packages["github.com/rusco/qunit"].ModuleDoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].ModuleStartCallbackObject, go$packages["github.com/rusco/qunit"].ModuleStartCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].QUnitAssert, go$packages["github.com/rusco/qunit"].QUnitAssert.Ptr, go$packages["github.com/rusco/qunit"].Raises, go$packages["github.com/rusco/qunit"].Raises.Ptr, go$packages["github.com/rusco/qunit"].TestDoneCallbackObject, go$packages["github.com/rusco/qunit"].TestDoneCallbackObject.Ptr, go$packages["github.com/rusco/qunit"].TestStartCallbackObject, go$packages["github.com/rusco/qunit"].TestStartCallbackObject.Ptr];
+go$packages["github.com/rusco/qunit"].Lifecycle.implementedBy = [go$packages["main"].Scenario, go$packages["main"].Scenario.Ptr];
 go$packages["runtime"].init();
 go$packages["github.com/gopherjs/gopherjs/js"].init();
 go$packages["github.com/rusco/qunit"].init();

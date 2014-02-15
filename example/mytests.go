@@ -4,9 +4,19 @@ package test
 import QUnit "github.com/rusco/qunit"
 import "strconv"
 
+//fictive TestScenario
+type Scenario struct{}
+
+func (s Scenario) Setup() {
+	print("Hi, I am the Setup Function")
+}
+func (s Scenario) Teardown() {
+	print("Hi, I am the Teardown Function")
+}
+
 func main() {
 
-	QUnit.Module("A")
+	QUnit.ModuleLifecycle("A", Scenario{})
 	QUnit.Test("just a test", func(assert QUnit.QUnitAssert) {
 		QUnit.Expect(1)
 		assert.Ok(true, "")

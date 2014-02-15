@@ -194,12 +194,21 @@ func Module(name string) interface{} {
 	return js.Global("QUnit").Call("module", name)
 }
 
-/*
-2do: 
-func ModuleLifecycle(name string, lifecycle LifecycleObject) interface{} {
-	return js.Global("QUnit").Call("module", name, lifecycle)
+type Lifecycle interface {
+	Setup()
+	Teardown()
 }
-*/
+
+func ModuleLifecycle(name string, lc Lifecycle) interface{} {
+	o := js.Global("Object").New()
+	if lc.Setup != nil {
+		o.Set("setup", lc.Setup)
+	}
+	if lc.Teardown != nil {
+		o.Set("teardown", lc.Teardown)
+	}
+	return js.Global("QUnit").Call("module", name, o)
+}
 
 type Raises struct {
 	js.Object
