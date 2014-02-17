@@ -10,7 +10,7 @@ if (typeof window !== "undefined") {
 	go$global = GLOBAL;
 }
 
-var go$idCounter = 1;
+var go$idCounter = 0;
 var go$keys = function(m) { return m ? Object.keys(m) : []; };
 var go$min = Math.min;
 var go$parseInt = parseInt;
@@ -18,6 +18,14 @@ var go$parseFloat = parseFloat;
 var go$reflect, go$newStringPtr;
 var Go$Array = Array;
 var Go$Error = Error;
+
+var go$floatKey = function(f) {
+	if (f !== f) {
+		go$idCounter++;
+		return "NaN$" + go$idCounter;
+	}
+	return String(f);
+};
 
 var go$mapArray = function(array, f) {
 	var newArray = new array.constructor(array.length), i;
@@ -40,12 +48,16 @@ var go$newType = function(size, kind, string, name, pkgPath, constructor) {
 	case "Uint16":
 	case "Uint32":
 	case "Uintptr":
-	case "Float32":
-	case "Float64":
 	case "String":
 	case "UnsafePointer":
 		typ = function(v) { this.go$val = v; };
 		typ.prototype.go$key = function() { return string + "$" + this.go$val; };
+		break;
+
+	case "Float32":
+	case "Float64":
+		typ = function(v) { this.go$val = v; };
+		typ.prototype.go$key = function() { return string + "$" + go$floatKey(this.go$val); };
 		break;
 
 	case "Int64":
@@ -102,8 +114,8 @@ var go$newType = function(size, kind, string, name, pkgPath, constructor) {
 		typ = function() { this.go$val = this; };
 		typ.prototype.go$key = function() {
 			if (this.go$id === undefined) {
-				this.go$id = go$idCounter;
 				go$idCounter++;
+				this.go$id = go$idCounter;
 			}
 			return String(this.go$id);
 		};
@@ -160,8 +172,8 @@ var go$newType = function(size, kind, string, name, pkgPath, constructor) {
 		};
 		typ.prototype.go$key = function() {
 			if (this.go$id === undefined) {
-				this.go$id = go$idCounter;
 				go$idCounter++;
+				this.go$id = go$idCounter;
 			}
 			return String(this.go$id);
 		};
@@ -484,15 +496,21 @@ var go$newDataPointer = function(data, constructor) {
 	return new constructor(function() { return data; }, function(v) { data = v; });
 };
 
+var go$ldexp = function(frac, exp) {
+	if (frac === 0) { return frac; }
+	if (exp >= 1024) { return frac * Math.pow(2, 1023) * Math.pow(2, exp - 1023); }
+	if (exp <= -1024) { return frac * Math.pow(2, -1023) * Math.pow(2, exp + 1023); }
+	return frac * Math.pow(2, exp);
+};
 var go$float32bits = function(f) {
-	var s, e;
+	var s, e, r;
 	if (f === 0) {
 		if (f === 0 && 1 / f === 1 / -0) {
 			return 2147483648;
 		}
 		return 0;
 	}
-	if (!(f === f)) {
+	if (f !== f) {
 		return 2143289344;
 	}
 	s = 0;
@@ -502,20 +520,46 @@ var go$float32bits = function(f) {
 	}
 	e = 150;
 	while (f >= 1.6777216e+07) {
-		f = f / (2);
+		f = f / 2;
 		if (e === 255) {
 			break;
 		}
-		e = (e + (1) >>> 0);
+		e = e + 1 >>> 0;
 	}
 	while (f < 8.388608e+06) {
-		e = (e - (1) >>> 0);
+		e = e - 1 >>> 0;
 		if (e === 0) {
 			break;
 		}
-		f = f * (2);
+		f = f * 2;
 	}
-	return ((((s | (((e >>> 0) << 23) >>> 0)) >>> 0) | ((((((f + 0.5) >> 0) >>> 0) &~ 8388608) >>> 0))) >>> 0);
+	r = f % 2;
+	if ((r > 0.5 && r < 1) || r >= 1.5) {
+		f++;
+	}
+	return (((s | (e << 23 >>> 0)) >>> 0) | (((f >> 0) & ~8388608))) >>> 0;
+};
+var go$float32frombits = function(b) {
+	var s, e, m;
+	s = 1;
+	if (((b & 2147483648) >>> 0) !== 0) {
+		s = -1;
+	}
+	e = (((b >>> 23 >>> 0)) & 255) >>> 0;
+	m = (b & 8388607) >>> 0;
+	if (e === 255) {
+		if (m === 0) {
+			return s / 0;
+		}
+		return 0/0;
+	}
+	if (e !== 0) {
+		m = m + 8388608 >>> 0;
+	}
+	if (e === 0) {
+		e = 1;
+	}
+	return go$ldexp(m, e - 127 - 23) * s;
 };
 
 var go$flatten64 = function(x) {
@@ -1231,9 +1275,9 @@ var go$interfaceIsEqual = function(a, b) {
 	}
 	switch (a.constructor.kind) {
 	case "Float32":
-		return go$float32bits(a.go$val) === go$float32bits(b.go$val);
+		return go$float32IsEqual(a.go$val, b.go$val);
 	case "Complex64":
-		return go$float32bits(a.go$val.real) === go$float32bits(b.go$val.real) && go$float32bits(a.go$val.imag) === go$float32bits(b.go$val.imag);
+		return go$float32IsEqual(a.go$val.real, b.go$val.real) && go$float32IsEqual(a.go$val.imag, b.go$val.imag);
 	case "Complex128":
 		return a.go$val.real === b.go$val.real && a.go$val.imag === b.go$val.imag;
 	case "Int64":
@@ -1257,6 +1301,9 @@ var go$interfaceIsEqual = function(a, b) {
 		return a.go$val === b.go$val;
 	}
 };
+var go$float32IsEqual = function(a, b) {
+	return a === a && b === b && go$float32bits(a) === go$float32bits(b);
+}
 var go$arrayIsEqual = function(a, b) {
 	if (a.length != b.length) {
 		return false;
@@ -3677,17 +3724,6 @@ go$packages["github.com/rusco/qunit"] = (function() {
 		}
 		return go$global.QUnit.module(go$externalize(name, Go$String), o);
 	};
-	var ModuleLifecycle___Works = go$pkg.ModuleLifecycle___Works = function(name, setup, teardown) {
-		var o;
-		o = new go$global.Object();
-		if (!(setup === go$throwNilPointerError)) {
-			o.setup = go$externalize(setup, (go$funcType([], [], false)));
-		}
-		if (!(teardown === go$throwNilPointerError)) {
-			o.teardown = go$externalize(teardown, (go$funcType([], [], false)));
-		}
-		return go$global.QUnit.module(go$externalize(name, Go$String), o);
-	};
 	var Push = go$pkg.Push = function(result, actual, expected, message) {
 		return go$global.QUnit.push(go$externalize(result, go$emptyInterface), go$externalize(actual, go$emptyInterface), go$externalize(expected, go$emptyInterface), go$externalize(message, Go$String));
 	};
@@ -4859,12 +4895,7 @@ go$packages["math"] = (function() {
 		}
 		return b;
 	};
-	var Ldexp = go$pkg.Ldexp = function(frac, exp) {
-			if (frac === 0) { return frac; }
-			if (exp >= 1024) { return frac * Math.pow(2, 1023) * Math.pow(2, exp - 1023); }
-			if (exp <= -1024) { return frac * Math.pow(2, -1023) * Math.pow(2, exp + 1023); }
-			return frac * Math.pow(2, exp);
-		};
+	var Ldexp = go$pkg.Ldexp = go$ldexp;
 	var ldexp = function(frac, exp$1) {
 		var _tuple, e, x, m, x$1;
 		if (frac === 0) {
@@ -5605,37 +5636,16 @@ go$packages["math"] = (function() {
 		return z;
 	};
 	var Float32bits = go$pkg.Float32bits = go$float32bits;
-	var Float32frombits = go$pkg.Float32frombits = function(b) {
-			var s, e, m;
-			s = 1;
-			if (!(((b & 2147483648) >>> 0) === 0)) {
-				s = -1;
-			}
-			e = (((((b >>> 23) >>> 0)) & 255) >>> 0);
-			m = ((b & 8388607) >>> 0);
-			if (e === 255) {
-				if (m === 0) {
-					return s / 0;
-				}
-				return 0/0;
-			}
-			if (!(e === 0)) {
-				m = (m + (8388608) >>> 0);
-			}
-			if (e === 0) {
-				e = 1;
-			}
-			return Ldexp(m, e - 127 - 23) * s;
-		};
+	var Float32frombits = go$pkg.Float32frombits = go$float32frombits;
 	var Float64bits = go$pkg.Float64bits = function(f) {
-			var s, e, x, y, x$1, y$1, x$2, y$2;
+			var s, e, x, x$1, x$2, x$3;
 			if (f === 0) {
 				if (f === 0 && 1 / f === 1 / -0) {
 					return new Go$Uint64(2147483648, 0);
 				}
 				return new Go$Uint64(0, 0);
 			}
-			if (!(f === f)) {
+			if (f !== f) {
 				return new Go$Uint64(2146959360, 1);
 			}
 			s = new Go$Uint64(0, 0);
@@ -5645,42 +5655,42 @@ go$packages["math"] = (function() {
 			}
 			e = 1075;
 			while (f >= 9.007199254740992e+15) {
-				f = f / (2);
+				f = f / 2;
 				if (e === 2047) {
 					break;
 				}
-				e = (e + (1) >>> 0);
+				e = e + 1 >>> 0;
 			}
 			while (f < 4.503599627370496e+15) {
-				e = (e - (1) >>> 0);
+				e = e - 1 >>> 0;
 				if (e === 0) {
 					break;
 				}
-				f = f * (2);
+				f = f * 2;
 			}
-			return (x$2 = (x = s, y = go$shiftLeft64(new Go$Uint64(0, e), 52), new Go$Uint64(x.high | y.high, (x.low | y.low) >>> 0)), y$2 = ((x$1 = new Go$Uint64(0, f), y$1 = new Go$Uint64(1048576, 0), new Go$Uint64(x$1.high &~ y$1.high, (x$1.low &~ y$1.low) >>> 0))), new Go$Uint64(x$2.high | y$2.high, (x$2.low | y$2.low) >>> 0));
+			return (x = (x$1 = go$shiftLeft64(new Go$Uint64(0, e), 52), new Go$Uint64(s.high | x$1.high, (s.low | x$1.low) >>> 0)), x$2 = (x$3 = new Go$Uint64(0, f), new Go$Uint64(x$3.high &~ 1048576, (x$3.low &~ 0) >>> 0)), new Go$Uint64(x.high | x$2.high, (x.low | x$2.low) >>> 0));
 		};
 	var Float64frombits = go$pkg.Float64frombits = function(b) {
-			var s, x, y, x$1, y$1, x$2, y$2, e, x$3, y$3, m, x$4, y$4, x$5, y$5, x$6, y$6, x$7, y$7, x$8, y$8;
+			var s, x, x$1, e, m;
 			s = 1;
-			if (!((x$1 = (x = b, y = new Go$Uint64(2147483648, 0), new Go$Uint64(x.high & y.high, (x.low & y.low) >>> 0)), y$1 = new Go$Uint64(0, 0), x$1.high === y$1.high && x$1.low === y$1.low))) {
+			if (!((x = new Go$Uint64(b.high & 2147483648, (b.low & 0) >>> 0), (x.high === 0 && x.low === 0)))) {
 				s = -1;
 			}
-			e = (x$2 = (go$shiftRightUint64(b, 52)), y$2 = new Go$Uint64(0, 2047), new Go$Uint64(x$2.high & y$2.high, (x$2.low & y$2.low) >>> 0));
-			m = (x$3 = b, y$3 = new Go$Uint64(1048575, 4294967295), new Go$Uint64(x$3.high & y$3.high, (x$3.low & y$3.low) >>> 0));
-			if ((x$4 = e, y$4 = new Go$Uint64(0, 2047), x$4.high === y$4.high && x$4.low === y$4.low)) {
-				if ((x$5 = m, y$5 = new Go$Uint64(0, 0), x$5.high === y$5.high && x$5.low === y$5.low)) {
+			e = (x$1 = go$shiftRightUint64(b, 52), new Go$Uint64(x$1.high & 0, (x$1.low & 2047) >>> 0));
+			m = new Go$Uint64(b.high & 1048575, (b.low & 4294967295) >>> 0);
+			if ((e.high === 0 && e.low === 2047)) {
+				if ((m.high === 0 && m.low === 0)) {
 					return s / 0;
 				}
 				return 0/0;
 			}
-			if (!((x$6 = e, y$6 = new Go$Uint64(0, 0), x$6.high === y$6.high && x$6.low === y$6.low))) {
-				m = (x$7 = m, y$7 = (new Go$Uint64(1048576, 0)), new Go$Uint64(x$7.high + y$7.high, x$7.low + y$7.low));
+			if (!((e.high === 0 && e.low === 0))) {
+				m = new Go$Uint64(m.high + 1048576, m.low + 0);
 			}
-			if ((x$8 = e, y$8 = new Go$Uint64(0, 0), x$8.high === y$8.high && x$8.low === y$8.low)) {
+			if ((e.high === 0 && e.low === 0)) {
 				e = new Go$Uint64(0, 1);
 			}
-			return Ldexp((m.high * 4294967296 + m.low), e.low - 1023 - 52) * s;
+			return go$ldexp(go$flatten64(m), ((e.low >> 0) - 1023 >> 0) - 52 >> 0) * s;
 		};
 	go$pkg.init = function() {
 		pow10tab = go$makeNativeArray("Float64", 70, function() { return 0; });
@@ -6691,7 +6701,7 @@ go$packages["strconv"] = (function() {
 		err = null;
 		if (bitSize === 32) {
 			_tuple = atof32(s), f1 = _tuple[0], err1 = _tuple[1];
-			_tuple$1 = [f1, err1], f = _tuple$1[0], err = _tuple$1[1];
+			_tuple$1 = [go$float32frombits(go$float32bits(f1)), err1], f = _tuple$1[0], err = _tuple$1[1];
 			return [f, err];
 		}
 		_tuple$2 = atof64(s), f1$1 = _tuple$2[0], err1$1 = _tuple$2[1];
@@ -8382,13 +8392,13 @@ go$packages["main"] = (function() {
 	Scenario.Ptr.prototype.Setup = function() {
 		var _struct, s;
 		s = (_struct = this, new Scenario.Ptr());
-		console.log(" s 3");
+		console.log("Hi, I am the Setup Function");
 	};
 	Scenario.prototype.Setup = function() { return this.go$val.Setup(); };
 	Scenario.Ptr.prototype.Teardown = function() {
 		var _struct, s;
 		s = (_struct = this, new Scenario.Ptr());
-		console.log(" s 4");
+		console.log("Hi, I am the Teardown Function");
 	};
 	Scenario.prototype.Teardown = function() { return this.go$val.Teardown(); };
 	var main = go$pkg.main = function() {
