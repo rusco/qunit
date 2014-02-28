@@ -103,95 +103,95 @@ func (qa QUnitAssert) Throws(block func() interface{}, message string) interface
 //start QUnit static methods
 func Test(name string, testFn func(QUnitAssert)) {
 
-	js.Global("QUnit").Call("test", name, func(e js.Object) {
+	js.Global.Get("QUnit").Call("test", name, func(e js.Object) {
 		testFn(QUnitAssert{Object: e})
 	})
 }
 
 func TestExpected(title string, expected int, testFn func(assert QUnitAssert) interface{}) interface{} {
-	t := js.Global("QUnit").Call("test", title, expected, func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("test", title, expected, func(e js.Object) {
 		testFn(QUnitAssert{Object: e})
 	})
 	return t
 }
 
 func Start() interface{} {
-	return js.Global("QUnit").Call("start")
+	return js.Global.Get("QUnit").Call("start")
 }
 func StartDecrement(decrement int) interface{} {
-	return js.Global("QUnit").Call("start", decrement)
+	return js.Global.Get("QUnit").Call("start", decrement)
 }
 func Stop() interface{} {
-	return js.Global("QUnit").Call("stop")
+	return js.Global.Get("QUnit").Call("stop")
 }
 func StopIncrement(increment int) interface{} {
-	return js.Global("QUnit").Call("stop", increment)
+	return js.Global.Get("QUnit").Call("stop", increment)
 }
 
 func Begin(callbackFn func() interface{}) interface{} {
-	t := js.Global("QUnit").Call("begin", func() {
+	t := js.Global.Get("QUnit").Call("begin", func() {
 		callbackFn()
 	})
 	return t
 }
 func Done(callbackFn func(details DoneCallbackObject) interface{}) interface{} {
-	t := js.Global("QUnit").Call("done", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("done", func(e js.Object) {
 		callbackFn(DoneCallbackObject{Object: e})
 	})
 	return t
 }
 func Log(callbackFn func(details LogCallbackObject) interface{}) interface{} {
-	t := js.Global("QUnit").Call("log", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("log", func(e js.Object) {
 		callbackFn(LogCallbackObject{Object: e})
 	})
 	return t
 }
 func ModuleDone(callbackFn func(details ModuleDoneCallbackObject) interface{}) interface{} {
-	t := js.Global("QUnit").Call("moduleDone", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("moduleDone", func(e js.Object) {
 		callbackFn(ModuleDoneCallbackObject{Object: e})
 	})
 	return t
 }
 func ModuleStart(callbackFn func(name string) interface{}) interface{} {
-	t := js.Global("QUnit").Call("moduleStart", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("moduleStart", func(e js.Object) {
 		callbackFn(e.String())
 	})
 	return t
 }
 func TestDone(callbackFn func(details TestDoneCallbackObject) interface{}) interface{} {
-	t := js.Global("QUnit").Call("testDone", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("testDone", func(e js.Object) {
 		callbackFn(TestDoneCallbackObject{Object: e})
 	})
 	return t
 }
 func TestStart(callbackFn func(details TestStartCallbackObject) interface{}) interface{} {
-	t := js.Global("QUnit").Call("testStart", func(e js.Object) {
+	t := js.Global.Get("QUnit").Call("testStart", func(e js.Object) {
 		callbackFn(TestStartCallbackObject{Object: e})
 	})
 	return t
 }
 func AsyncTestExpected(name string, expected interface{}, testFn func() interface{}) interface{} {
-	t := js.Global("QUnit").Call("asyncTestExpected", name, expected, func() {
+	t := js.Global.Get("QUnit").Call("asyncTestExpected", name, expected, func() {
 		testFn()
 	})
 	return t
 }
 func AsyncTest(name string, testFn func() interface{}) interface{} {
-	t := js.Global("QUnit").Call("asyncTest", name, func() {
+	t := js.Global.Get("QUnit").Call("asyncTest", name, func() {
 		testFn()
 	})
 	return t
 }
 func Expect(amount int) interface{} {
-	return js.Global("QUnit").Call("expect", amount)
+	return js.Global.Get("QUnit").Call("expect", amount)
 }
 
 func Equiv(a interface{}, b interface{}) interface{} {
-	return js.Global("QUnit").Call("equip", a, b)
+	return js.Global.Get("QUnit").Call("equip", a, b)
 }
 
 func Module(name string) interface{} {
-	return js.Global("QUnit").Call("module", name)
+	return js.Global.Get("QUnit").Call("module", name)
 }
 
 type Lifecycle interface {
@@ -200,14 +200,14 @@ type Lifecycle interface {
 }
 
 func ModuleLifecycle(name string, lc Lifecycle) interface{} {
-	o := js.Global("Object").New()
+	o := js.Global.Get("Object").New()
 	if lc.Setup != nil {
 		o.Set("setup", lc.Setup)
 	}
 	if lc.Teardown != nil {
 		o.Set("teardown", lc.Teardown)
 	}
-	return js.Global("QUnit").Call("module", name, o)
+	return js.Global.Get("QUnit").Call("module", name, o)
 }
 
 type Raises struct {
@@ -216,9 +216,9 @@ type Raises struct {
 }
 
 func Push(result interface{}, actual interface{}, expected interface{}, message string) interface{} {
-	return js.Global("QUnit").Call("push", result, actual, expected, message)
+	return js.Global.Get("QUnit").Call("push", result, actual, expected, message)
 }
 
 func Reset() interface{} {
-	return js.Global("QUnit").Call("reset")
+	return js.Global.Get("QUnit").Call("reset")
 }
