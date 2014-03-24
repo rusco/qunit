@@ -1556,10 +1556,10 @@ go$packages["math"] = (function() {
 		y = 0;
 		exp$1 = 0;
 		if (Abs(x) < 2.2250738585072014e-308) {
-			_tuple = [x * 4.503599627370496e+15, -52], y = _tuple[0], exp$1 = _tuple[1];
+			_tuple = [x * 4.503599627370496e+15, -52]; y = _tuple[0]; exp$1 = _tuple[1];
 			return [y, exp$1];
 		}
-		_tuple$1 = [x, 0], y = _tuple$1[0], exp$1 = _tuple$1[1];
+		_tuple$1 = [x, 0]; y = _tuple$1[0]; exp$1 = _tuple$1[1];
 		return [y, exp$1];
 	};
 	expm1 = function(x) {
@@ -1586,7 +1586,7 @@ go$packages["math"] = (function() {
 		c = 0;
 		k = 0;
 		if (absx > 0.34657359027997264) {
-			_tuple = [0, 0], hi = _tuple[0], lo = _tuple[1];
+			_tuple = [0, 0]; hi = _tuple[0]; lo = _tuple[1];
 			if (absx < 1.0397207708399179) {
 				if (!sign) {
 					hi = x - 0.6931471803691238;
@@ -1654,13 +1654,13 @@ go$packages["math"] = (function() {
 		frac = 0;
 		exp$1 = 0;
 		if (f === 0) {
-			_tuple = [f, 0], frac = _tuple[0], exp$1 = _tuple[1];
+			_tuple = [f, 0]; frac = _tuple[0]; exp$1 = _tuple[1];
 			return [frac, exp$1];
 		} else if (IsInf(f, 0) || IsNaN(f)) {
-			_tuple$1 = [f, 0], frac = _tuple$1[0], exp$1 = _tuple$1[1];
+			_tuple$1 = [f, 0]; frac = _tuple$1[0]; exp$1 = _tuple$1[1];
 			return [frac, exp$1];
 		}
-		_tuple$2 = normalize(f), f = _tuple$2[0], exp$1 = _tuple$2[1];
+		_tuple$2 = normalize(f); f = _tuple$2[0]; exp$1 = _tuple$2[1];
 		x = Float64bits(f);
 		exp$1 = exp$1 + (((((x$1 = go$shiftRightUint64(x, 52), new Go$Uint64(x$1.high & 0, (x$1.low & 2047) >>> 0)).low >> 0) - 1023 >> 0) + 1 >> 0)) >> 0;
 		x = new Go$Uint64(x.high &~ 2146435072, (x.low &~ 0) >>> 0);
@@ -1682,7 +1682,7 @@ go$packages["math"] = (function() {
 			q = -q;
 		}
 		if (p < q) {
-			_tuple = [q, p], p = _tuple[0], q = _tuple[1];
+			_tuple = [q, p]; p = _tuple[0]; q = _tuple[1];
 		}
 		if (p === 0) {
 			return 0;
@@ -1696,7 +1696,7 @@ go$packages["math"] = (function() {
 	};
 	log2 = function(x) {
 		var _tuple, frac, exp$1;
-		_tuple = Frexp(x), frac = _tuple[0], exp$1 = _tuple[1];
+		_tuple = Frexp(x); frac = _tuple[0]; exp$1 = _tuple[1];
 		return Log(frac) * 1.4426950408889634 + exp$1;
 	};
 	log1p = function(x) {
@@ -1758,7 +1758,7 @@ go$packages["math"] = (function() {
 			f = u - 1;
 		}
 		hfsq = 0.5 * f * f;
-		_tuple = [0, 0, 0], s = _tuple[0], R = _tuple[1], z = _tuple[2];
+		_tuple = [0, 0, 0]; s = _tuple[0]; R = _tuple[1]; z = _tuple[2];
 		if ((iu.high === 0 && iu.low === 0)) {
 			if (f === 0) {
 				if (k === 0) {
@@ -1905,7 +1905,7 @@ go$packages["strconv"] = (function() {
 	var go$pkg = {}, math = go$packages["math"], errors = go$packages["errors"], utf8 = go$packages["unicode/utf8"], FormatInt, Itoa, formatBits, shifts;
 	FormatInt = go$pkg.FormatInt = function(i, base) {
 		var _tuple, s;
-		_tuple = formatBits((go$sliceType(Go$Uint8)).nil, new Go$Uint64(i.high, i.low), base, (i.high < 0 || (i.high === 0 && i.low < 0)), false), s = _tuple[1];
+		_tuple = formatBits((go$sliceType(Go$Uint8)).nil, new Go$Uint64(i.high, i.low), base, (i.high < 0 || (i.high === 0 && i.low < 0)), false); s = _tuple[1];
 		return s;
 	};
 	Itoa = go$pkg.Itoa = function(i) {
@@ -2038,3 +2038,4 @@ go$packages["main"].init();
 go$packages["main"].main();
 
 })();
+//# sourceMappingURL=mytests.js.map

@@ -5,11 +5,11 @@
     go get github.com/rusco/qunit 
 
 ### Links
-- QUnit, A Javascript Unit Testing Framework (http://qunitjs.com/)
-- GopherJS, A Golang to Javascript Transpiler (https://github.com/gopherjs/gopherjs)
+- QUnit, A Javascript Unit Testing Framework ([Qunit](http://qunitjs.com/))
+- GopherJS, A Golang to Javascript Transpiler ([GopherJS](https://github.com/gopherjs/gopherjs))
 
-### Attention: 
+### Attention 
 
-This is a first alpha relase, only some parts of the API have been tested ! 
+This is just a minimal QUnit Binding to test the jQuery Bindings. At some point in time I might move to the native Golang Testing facilities.
 
-Look at the example folder for a sample usage.
+Look at the example folder for a sample usage
