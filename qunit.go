@@ -115,6 +115,10 @@ func TestExpected(title string, expected int, testFn func(assert QUnitAssert) in
 	return t
 }
 
+func Ok(state interface{}, message string) interface{} {
+	return js.Global.Get("QUnit").Call("ok", state, message)
+}
+
 func Start() interface{} {
 	return js.Global.Get("QUnit").Call("start")
 }

@@ -1,8 +1,11 @@
 package test
 
 //test package for qunit
-import QUnit "github.com/rusco/qunit"
-import "strconv"
+import (
+	"github.com/gopherjs/gopherjs/js"
+	QUnit "github.com/rusco/qunit"
+	"strconv"
+)
 
 //fictive TestScenario
 type Scenario struct{}
@@ -37,5 +40,14 @@ func main() {
 	QUnit.Module("C")
 	QUnit.Test("test 3", func(assert QUnit.QUnitAssert) {
 		assert.Ok(true, "0 means false")
+	})
+	QUnit.AsyncTest("Async Test", func() interface{} {
+		QUnit.Expect(1)
+
+		return js.Global.Call("setTimeout", func() {
+			QUnit.Ok(true, "async test failure")
+			QUnit.Start()
+		}, 500)
+
 	})
 }

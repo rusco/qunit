@@ -1423,7 +1423,7 @@ go$packages["github.com/gopherjs/gopherjs/js"] = (function() {
 	return go$pkg;
 })();
 go$packages["github.com/rusco/qunit"] = (function() {
-	var go$pkg = {}, js = go$packages["github.com/gopherjs/gopherjs/js"], QUnitAssert, Test, Expect, Module, ModuleLifecycle;
+	var go$pkg = {}, js = go$packages["github.com/gopherjs/gopherjs/js"], QUnitAssert, Test, Ok, Start, AsyncTest, Expect, Module, ModuleLifecycle;
 	QUnitAssert = go$pkg.QUnitAssert = go$newType(0, "Struct", "qunit.QUnitAssert", "QUnitAssert", "github.com/rusco/qunit", function(Object_) {
 		this.go$val = this;
 		this.Object = Object_ !== undefined ? Object_ : null;
@@ -1498,6 +1498,19 @@ go$packages["github.com/rusco/qunit"] = (function() {
 		go$global.QUnit.test(go$externalize(name, Go$String), go$externalize((function(e) {
 			testFn(new QUnitAssert.Ptr(e));
 		}), (go$funcType([js.Object], [], false))));
+	};
+	Ok = go$pkg.Ok = function(state, message) {
+		return go$global.QUnit.ok(go$externalize(state, go$emptyInterface), go$externalize(message, Go$String));
+	};
+	Start = go$pkg.Start = function() {
+		return go$global.QUnit.start();
+	};
+	AsyncTest = go$pkg.AsyncTest = function(name, testFn) {
+		var t;
+		t = go$global.QUnit.asyncTest(go$externalize(name, Go$String), go$externalize((function() {
+			testFn();
+		}), (go$funcType([], [], false))));
+		return t;
 	};
 	Expect = go$pkg.Expect = function(amount) {
 		return go$global.QUnit.expect(amount);
@@ -1978,7 +1991,7 @@ go$packages["strconv"] = (function() {
 	return go$pkg;
 })();
 go$packages["main"] = (function() {
-	var go$pkg = {}, qunit = go$packages["github.com/rusco/qunit"], strconv = go$packages["strconv"], Scenario, main;
+	var go$pkg = {}, js = go$packages["github.com/gopherjs/gopherjs/js"], qunit = go$packages["github.com/rusco/qunit"], strconv = go$packages["strconv"], Scenario, main;
 	Scenario = go$pkg.Scenario = go$newType(0, "Struct", "test.Scenario", "Scenario", "main", function() {
 		this.go$val = this;
 	});
@@ -2017,6 +2030,13 @@ go$packages["main"] = (function() {
 		qunit.Test("test 3", (function(assert) {
 			assert.Ok(new Go$Bool(true), "0 means false");
 		}));
+		qunit.AsyncTest("Async Test", (function() {
+			qunit.Expect(1);
+			return go$global.setTimeout(go$externalize((function() {
+				qunit.Ok(new Go$Bool(true), "async test failure");
+				qunit.Start();
+			}), (go$funcType([], [], false))), 500);
+		}));
 	};
 	go$pkg.init = function() {
 		Scenario.methods = [["Setup", "", [], [], false, -1], ["Teardown", "", [], [], false, -1]];
@@ -2038,4 +2058,4 @@ go$packages["main"].init();
 go$packages["main"].main();
 
 })();
-//# sourceMappingURL=mytests.js.map
+//# sourceMappingURL=tests.js.map
