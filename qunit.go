@@ -158,7 +158,7 @@ func ModuleDone(callbackFn func(details ModuleDoneCallbackObject) interface{}) i
 }
 func ModuleStart(callbackFn func(name string) interface{}) interface{} {
 	t := js.Global.Get("QUnit").Call("moduleStart", func(e js.Object) {
-		callbackFn(e.String())
+		callbackFn(e.Str())
 	})
 	return t
 }
