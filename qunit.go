@@ -53,52 +53,52 @@ type TestStartCallbackObject struct {
 	module string `js:"module"`
 }
 
-func log(i ...js.Any) {
+func log(i ...interface{}) {
 	js.Global.Get("console").Call("log", i...)
 }
 
-func (qa QUnitAssert) DeepEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) DeepEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("deepEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) Equal(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) Equal(actual interface{}, expected interface{}, message string) bool {
 	log("---> qunit: ", actual, expected, qa.Call("equal", actual, expected, message), qa.Call("equal", actual, expected, message).Bool())
 	return qa.Call("equal", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) NotDeepEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) NotDeepEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("notDeepEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) NotEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) NotEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("notEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) NotPropEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) NotPropEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("notPropEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) PropEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) PropEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("propEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) NotStrictEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) NotStrictEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("notStrictEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) Ok(state js.Any, message string) bool {
+func (qa QUnitAssert) Ok(state interface{}, message string) bool {
 	return qa.Call("ok", state, message).Bool()
 }
 
-func (qa QUnitAssert) StrictEqual(actual js.Any, expected js.Any, message string) bool {
+func (qa QUnitAssert) StrictEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("strictEqual", actual, expected, message).Bool()
 }
 
-func (qa QUnitAssert) ThrowsExpected(block func() js.Any, expected js.Any, message string) js.Object {
+func (qa QUnitAssert) ThrowsExpected(block func() interface{}, expected interface{}, message string) js.Object {
 	return qa.Call("throwsExpected", block, expected, message)
 }
 
-func (qa QUnitAssert) Throws(block func() js.Any, message string) js.Object {
+func (qa QUnitAssert) Throws(block func() interface{}, message string) js.Object {
 	return qa.Call("throws", block, message)
 }
 
@@ -117,7 +117,7 @@ func TestExpected(title string, expected int, testFn func(assert QUnitAssert) in
 	return t
 }
 
-func Ok(state js.Any, message string) js.Object {
+func Ok(state interface{}, message string) js.Object {
 	return js.Global.Get("QUnit").Call("ok", state, message)
 }
 
@@ -180,7 +180,7 @@ func TestStart(callbackFn func(details TestStartCallbackObject) interface{}) js.
 	})
 	return t
 }
-func AsyncTestExpected(name string, expected js.Any, testFn func() interface{}) js.Object {
+func AsyncTestExpected(name string, expected interface{}, testFn func() interface{}) js.Object {
 	t := js.Global.Get("QUnit").Call("asyncTestExpected", name, expected, func() {
 		testFn()
 	})
@@ -196,7 +196,7 @@ func Expect(amount int) js.Object {
 	return js.Global.Get("QUnit").Call("expect", amount)
 }
 
-func Equiv(a js.Any, b interface{}) js.Object {
+func Equiv(a interface{}, b interface{}) js.Object {
 	return js.Global.Get("QUnit").Call("equip", a, b)
 }
 
@@ -225,7 +225,7 @@ type Raises struct {
 	Raises js.Object `js:"raises"`
 }
 
-func Push(result js.Any, actual js.Any, expected js.Any, message string) js.Object {
+func Push(result interface{}, actual interface{}, expected interface{}, message string) js.Object {
 	return js.Global.Get("QUnit").Call("push", result, actual, expected, message)
 }
 
