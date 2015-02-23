@@ -2,9 +2,10 @@ package main
 
 //test package for qunit
 import (
+	"strconv"
+
 	"github.com/gopherjs/gopherjs/js"
 	QUnit "github.com/rusco/qunit"
-	"strconv"
 )
 
 //fictive TestScenario
@@ -41,7 +42,7 @@ func main() {
 	QUnit.Test("test 3", func(assert QUnit.QUnitAssert) {
 		assert.Ok(true, "0 means false")
 	})
-	QUnit.AsyncTest("Async Test", func() js.Object {
+	QUnit.AsyncTest("Async Test", func() *js.Object {
 		QUnit.Expect(1)
 
 		return js.Global.Call("setTimeout", func() {

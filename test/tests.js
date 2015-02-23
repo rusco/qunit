@@ -366,7 +366,7 @@ var $internalAppend = function(slice, array, offset, length) {
 };
 
 var $equal = function(a, b, type) {
-  if (type === $js.Object) {
+  if (type === $jsObjectPtr) {
     return a === b;
   }
   switch (type.kind) {
@@ -694,8 +694,8 @@ var $newType = function(size, kind, string, name, pkg, constructor) {
           if (target.prototype[m.prop] !== undefined) { return; }
           target.prototype[m.prop] = function() {
             var v = this.$val[f.prop];
-            if (f.typ === $js.Object) {
-              v = new $js.container.ptr(v);
+            if (f.typ === $jsObjectPtr) {
+              v = new $jsObjectPtr(v);
             }
             if (v.$val === undefined) {
               v = new f.typ(v);
@@ -1116,8 +1116,8 @@ var $assertType = function(value, type, returnTuple) {
   if (!isInterface) {
     value = value.$val;
   }
-  if (type === $js.Object) {
-    value = value.Object;
+  if (type === $jsObjectPtr) {
+    value = value.object;
   }
   return returnTuple ? [value, true] : value;
 };
@@ -1322,7 +1322,7 @@ var $callDeferred = function(deferred, jsErr) {
     var newErr = null;
     try {
       $deferFrames.push(deferred);
-      $panic(new $js.Error.ptr(jsErr));
+      $panic(new $jsErrorPtr(jsErr));
     } catch (err) {
       newErr = err;
     }
@@ -1673,7 +1673,7 @@ var $select = function(comms) {
   return f;
 };
 
-var $js;
+var $jsObjectPtr, $jsErrorPtr;
 
 var $needsExternalization = function(t) {
   switch (t.kind) {
@@ -1690,15 +1690,13 @@ var $needsExternalization = function(t) {
     case $kindFloat32:
     case $kindFloat64:
       return false;
-    case $kindInterface:
-      return t !== $js.Object;
     default:
-      return true;
+      return t !== $jsObjectPtr;
   }
 };
 
 var $externalize = function(v, t) {
-  if ($js !== undefined && t === $js.Object) {
+  if (t === $jsObjectPtr) {
     return v;
   }
   switch (t.kind) {
@@ -1731,7 +1729,7 @@ var $externalize = function(v, t) {
       $checkForDeadlock = false;
       var convert = false;
       for (var i = 0; i < t.params.length; i++) {
-        convert = convert || (t.params[i] !== $js.Object);
+        convert = convert || (t.params[i] !== $jsObjectPtr);
       }
       for (var i = 0; i < t.results.length; i++) {
         convert = convert || $needsExternalization(t.results[i]);
@@ -1771,6 +1769,9 @@ var $externalize = function(v, t) {
     if (v === $ifaceNil) {
       return null;
     }
+    if (v.constructor === $jsObjectPtr) {
+      return v.$val.object;
+    }
     return $externalize(v.$val, v.constructor);
   case $kindMap:
     var m = {};
@@ -1809,16 +1810,16 @@ var $externalize = function(v, t) {
 
     var noJsObject = {};
     var searchJsObject = function(v, t) {
-      if (t === $js.Object) {
+      if (t === $jsObjectPtr) {
         return v;
       }
-      if (t.kind === $kindPtr && v !== t.nil) {
-        var o = searchJsObject(v.$get(), t.elem);
-        if (o !== noJsObject) {
-          return o;
+      switch (t.kind) {
+      case $kindPtr:
+        if (v === t.nil) {
+          return noJsObject;
         }
-      }
-      if (t.kind === $kindStruct) {
+        return searchJsObject(v.$get(), t.elem);
+      case $kindStruct:
         for (var i = 0; i < t.fields.length; i++) {
           var f = t.fields[i];
           var o = searchJsObject(v[f.prop], f.typ);
@@ -1826,8 +1827,12 @@ var $externalize = function(v, t) {
             return o;
           }
         }
+        return noJsObject;
+      case $kindInterface:
+        return searchJsObject(v.$val, v.constructor);
+      default:
+        return noJsObject;
       }
-      return noJsObject;
     };
     var o = searchJsObject(v, t);
     if (o !== noJsObject) {
@@ -1848,8 +1853,11 @@ var $externalize = function(v, t) {
 };
 
 var $internalize = function(v, t, recv) {
-  if (t === $js.Object) {
+  if (t === $jsObjectPtr) {
     return v;
+  }
+  if (t === $jsObjectPtr.elem) {
+    $panic(new $String("cannot internalize js.Object, use *js.Object instead"));
   }
   switch (t.kind) {
   case $kindBool:
@@ -1942,7 +1950,7 @@ var $internalize = function(v, t, recv) {
         return new timePkg.Time(timePkg.Unix(new $Int64(0, 0), new $Int64(0, v.getTime() * 1000000)));
       }
     case Function:
-      var funcType = $funcType([$sliceType($emptyInterface)], [$js.Object], true);
+      var funcType = $funcType([$sliceType($emptyInterface)], [$jsObjectPtr], true);
       return new funcType($internalize(v, funcType));
     case Number:
       return new $Float64(parseFloat(v));
@@ -1950,7 +1958,7 @@ var $internalize = function(v, t, recv) {
       return new $String($internalize(v, $String));
     default:
       if ($global.Node && v instanceof $global.Node) {
-        return new $js.container.ptr(v);
+        return new $jsObjectPtr(v);
       }
       var mapType = $mapType($String, $emptyInterface);
       return new mapType($internalize(v, mapType));
@@ -1982,16 +1990,16 @@ var $internalize = function(v, t, recv) {
   case $kindStruct:
     var noJsObject = {};
     var searchJsObject = function(t) {
-      if (t === $js.Object) {
+      if (t === $jsObjectPtr) {
         return v;
       }
-      if (t.kind === $kindPtr && t.elem.kind === $kindStruct) {
-        var o = searchJsObject(t.elem);
-        if (o !== noJsObject) {
-          return o;
-        }
+      if (t === $jsObjectPtr.elem) {
+        $panic(new $String("cannot internalize js.Object, use *js.Object instead"));
       }
-      if (t.kind === $kindStruct) {
+      switch (t.kind) {
+      case $kindPtr:
+        return searchJsObject(t.elem);
+      case $kindStruct:
         for (var i = 0; i < t.fields.length; i++) {
           var f = t.fields[i];
           var o = searchJsObject(f.typ);
@@ -2001,8 +2009,10 @@ var $internalize = function(v, t, recv) {
             return n;
           }
         }
+        return noJsObject;
+      default:
+        return noJsObject;
       }
-      return noJsObject;
     };
     var o = searchJsObject(t);
     if (o !== noJsObject) {
@@ -2013,121 +2023,120 @@ var $internalize = function(v, t, recv) {
 };
 
 $packages["github.com/gopherjs/gopherjs/js"] = (function() {
-	var $pkg = {}, Object, container, Error, sliceType$1, ptrType, ptrType$1, init;
-	Object = $pkg.Object = $newType(8, $kindInterface, "js.Object", "Object", "github.com/gopherjs/gopherjs/js", null);
-	container = $pkg.container = $newType(0, $kindStruct, "js.container", "container", "github.com/gopherjs/gopherjs/js", function(Object_) {
+	var $pkg = {}, Object, Error, ptrType, sliceType$1, ptrType$1, init;
+	Object = $pkg.Object = $newType(0, $kindStruct, "js.Object", "Object", "github.com/gopherjs/gopherjs/js", function(object_) {
 		this.$val = this;
-		this.Object = Object_ !== undefined ? Object_ : null;
+		this.object = object_ !== undefined ? object_ : null;
 	});
 	Error = $pkg.Error = $newType(0, $kindStruct, "js.Error", "Error", "github.com/gopherjs/gopherjs/js", function(Object_) {
 		this.$val = this;
 		this.Object = Object_ !== undefined ? Object_ : null;
 	});
+	ptrType = $ptrType(Object);
 	sliceType$1 = $sliceType($emptyInterface);
-	ptrType = $ptrType(container);
 	ptrType$1 = $ptrType(Error);
-	container.ptr.prototype.Get = function(key) {
-		var c, key;
-		c = this;
-		return c.Object[$externalize(key, $String)];
+	Object.ptr.prototype.Get = function(key) {
+		var key, o;
+		o = this;
+		return o.object[$externalize(key, $String)];
 	};
-	container.prototype.Get = function(key) { return this.$val.Get(key); };
-	container.ptr.prototype.Set = function(key, value) {
-		var c, key, value;
-		c = this;
-		c.Object[$externalize(key, $String)] = $externalize(value, $emptyInterface);
+	Object.prototype.Get = function(key) { return this.$val.Get(key); };
+	Object.ptr.prototype.Set = function(key, value) {
+		var key, o, value;
+		o = this;
+		o.object[$externalize(key, $String)] = $externalize(value, $emptyInterface);
 	};
-	container.prototype.Set = function(key, value) { return this.$val.Set(key, value); };
-	container.ptr.prototype.Delete = function(key) {
-		var c, key;
-		c = this;
-		delete c.Object[$externalize(key, $String)];
+	Object.prototype.Set = function(key, value) { return this.$val.Set(key, value); };
+	Object.ptr.prototype.Delete = function(key) {
+		var key, o;
+		o = this;
+		delete o.object[$externalize(key, $String)];
 	};
-	container.prototype.Delete = function(key) { return this.$val.Delete(key); };
-	container.ptr.prototype.Length = function() {
-		var c;
-		c = this;
-		return $parseInt(c.Object.length);
+	Object.prototype.Delete = function(key) { return this.$val.Delete(key); };
+	Object.ptr.prototype.Length = function() {
+		var o;
+		o = this;
+		return $parseInt(o.object.length);
 	};
-	container.prototype.Length = function() { return this.$val.Length(); };
-	container.ptr.prototype.Index = function(i) {
-		var c, i;
-		c = this;
-		return c.Object[i];
+	Object.prototype.Length = function() { return this.$val.Length(); };
+	Object.ptr.prototype.Index = function(i) {
+		var i, o;
+		o = this;
+		return o.object[i];
 	};
-	container.prototype.Index = function(i) { return this.$val.Index(i); };
-	container.ptr.prototype.SetIndex = function(i, value) {
-		var c, i, value;
-		c = this;
-		c.Object[i] = $externalize(value, $emptyInterface);
+	Object.prototype.Index = function(i) { return this.$val.Index(i); };
+	Object.ptr.prototype.SetIndex = function(i, value) {
+		var i, o, value;
+		o = this;
+		o.object[i] = $externalize(value, $emptyInterface);
 	};
-	container.prototype.SetIndex = function(i, value) { return this.$val.SetIndex(i, value); };
-	container.ptr.prototype.Call = function(name, args) {
-		var args, c, name, obj;
-		c = this;
-		return (obj = c.Object, obj[$externalize(name, $String)].apply(obj, $externalize(args, sliceType$1)));
+	Object.prototype.SetIndex = function(i, value) { return this.$val.SetIndex(i, value); };
+	Object.ptr.prototype.Call = function(name, args) {
+		var args, name, o, obj;
+		o = this;
+		return (obj = o.object, obj[$externalize(name, $String)].apply(obj, $externalize(args, sliceType$1)));
 	};
-	container.prototype.Call = function(name, args) { return this.$val.Call(name, args); };
-	container.ptr.prototype.Invoke = function(args) {
-		var args, c;
-		c = this;
-		return c.Object.apply(undefined, $externalize(args, sliceType$1));
+	Object.prototype.Call = function(name, args) { return this.$val.Call(name, args); };
+	Object.ptr.prototype.Invoke = function(args) {
+		var args, o;
+		o = this;
+		return o.object.apply(undefined, $externalize(args, sliceType$1));
 	};
-	container.prototype.Invoke = function(args) { return this.$val.Invoke(args); };
-	container.ptr.prototype.New = function(args) {
-		var args, c;
-		c = this;
-		return new ($global.Function.prototype.bind.apply(c.Object, [undefined].concat($externalize(args, sliceType$1))));
+	Object.prototype.Invoke = function(args) { return this.$val.Invoke(args); };
+	Object.ptr.prototype.New = function(args) {
+		var args, o;
+		o = this;
+		return new ($global.Function.prototype.bind.apply(o.object, [undefined].concat($externalize(args, sliceType$1))));
 	};
-	container.prototype.New = function(args) { return this.$val.New(args); };
-	container.ptr.prototype.Bool = function() {
-		var c;
-		c = this;
-		return !!(c.Object);
+	Object.prototype.New = function(args) { return this.$val.New(args); };
+	Object.ptr.prototype.Bool = function() {
+		var o;
+		o = this;
+		return !!(o.object);
 	};
-	container.prototype.Bool = function() { return this.$val.Bool(); };
-	container.ptr.prototype.String = function() {
-		var c;
-		c = this;
-		return $internalize(c.Object, $String);
+	Object.prototype.Bool = function() { return this.$val.Bool(); };
+	Object.ptr.prototype.String = function() {
+		var o;
+		o = this;
+		return $internalize(o.object, $String);
 	};
-	container.prototype.String = function() { return this.$val.String(); };
-	container.ptr.prototype.Int = function() {
-		var c;
-		c = this;
-		return $parseInt(c.Object) >> 0;
+	Object.prototype.String = function() { return this.$val.String(); };
+	Object.ptr.prototype.Int = function() {
+		var o;
+		o = this;
+		return $parseInt(o.object) >> 0;
 	};
-	container.prototype.Int = function() { return this.$val.Int(); };
-	container.ptr.prototype.Int64 = function() {
-		var c;
-		c = this;
-		return $internalize(c.Object, $Int64);
+	Object.prototype.Int = function() { return this.$val.Int(); };
+	Object.ptr.prototype.Int64 = function() {
+		var o;
+		o = this;
+		return $internalize(o.object, $Int64);
 	};
-	container.prototype.Int64 = function() { return this.$val.Int64(); };
-	container.ptr.prototype.Uint64 = function() {
-		var c;
-		c = this;
-		return $internalize(c.Object, $Uint64);
+	Object.prototype.Int64 = function() { return this.$val.Int64(); };
+	Object.ptr.prototype.Uint64 = function() {
+		var o;
+		o = this;
+		return $internalize(o.object, $Uint64);
 	};
-	container.prototype.Uint64 = function() { return this.$val.Uint64(); };
-	container.ptr.prototype.Float = function() {
-		var c;
-		c = this;
-		return $parseFloat(c.Object);
+	Object.prototype.Uint64 = function() { return this.$val.Uint64(); };
+	Object.ptr.prototype.Float = function() {
+		var o;
+		o = this;
+		return $parseFloat(o.object);
 	};
-	container.prototype.Float = function() { return this.$val.Float(); };
-	container.ptr.prototype.Interface = function() {
-		var c;
-		c = this;
-		return $internalize(c.Object, $emptyInterface);
+	Object.prototype.Float = function() { return this.$val.Float(); };
+	Object.ptr.prototype.Interface = function() {
+		var o;
+		o = this;
+		return $internalize(o.object, $emptyInterface);
 	};
-	container.prototype.Interface = function() { return this.$val.Interface(); };
-	container.ptr.prototype.Unsafe = function() {
-		var c;
-		c = this;
-		return c.Object;
+	Object.prototype.Interface = function() { return this.$val.Interface(); };
+	Object.ptr.prototype.Unsafe = function() {
+		var o;
+		o = this;
+		return o.object;
 	};
-	container.prototype.Unsafe = function() { return this.$val.Unsafe(); };
+	Object.prototype.Unsafe = function() { return this.$val.Unsafe(); };
 	Error.ptr.prototype.Error = function() {
 		var err;
 		err = this;
@@ -2141,16 +2150,13 @@ $packages["github.com/gopherjs/gopherjs/js"] = (function() {
 	};
 	Error.prototype.Stack = function() { return this.$val.Stack(); };
 	init = function() {
-		var _tmp, _tmp$1, c, e;
-		c = new container.ptr(null);
+		var e;
 		e = new Error.ptr(null);
-		
 	};
-	ptrType.methods = [{prop: "Get", name: "Get", pkg: "", typ: $funcType([$String], [Object], false)}, {prop: "Set", name: "Set", pkg: "", typ: $funcType([$String, $emptyInterface], [], false)}, {prop: "Delete", name: "Delete", pkg: "", typ: $funcType([$String], [], false)}, {prop: "Length", name: "Length", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Index", name: "Index", pkg: "", typ: $funcType([$Int], [Object], false)}, {prop: "SetIndex", name: "SetIndex", pkg: "", typ: $funcType([$Int, $emptyInterface], [], false)}, {prop: "Call", name: "Call", pkg: "", typ: $funcType([$String, sliceType$1], [Object], true)}, {prop: "Invoke", name: "Invoke", pkg: "", typ: $funcType([sliceType$1], [Object], true)}, {prop: "New", name: "New", pkg: "", typ: $funcType([sliceType$1], [Object], true)}, {prop: "Bool", name: "Bool", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "String", name: "String", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Int", name: "Int", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Int64", name: "Int64", pkg: "", typ: $funcType([], [$Int64], false)}, {prop: "Uint64", name: "Uint64", pkg: "", typ: $funcType([], [$Uint64], false)}, {prop: "Float", name: "Float", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "Interface", name: "Interface", pkg: "", typ: $funcType([], [$emptyInterface], false)}, {prop: "Unsafe", name: "Unsafe", pkg: "", typ: $funcType([], [$Uintptr], false)}];
+	ptrType.methods = [{prop: "Get", name: "Get", pkg: "", typ: $funcType([$String], [ptrType], false)}, {prop: "Set", name: "Set", pkg: "", typ: $funcType([$String, $emptyInterface], [], false)}, {prop: "Delete", name: "Delete", pkg: "", typ: $funcType([$String], [], false)}, {prop: "Length", name: "Length", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Index", name: "Index", pkg: "", typ: $funcType([$Int], [ptrType], false)}, {prop: "SetIndex", name: "SetIndex", pkg: "", typ: $funcType([$Int, $emptyInterface], [], false)}, {prop: "Call", name: "Call", pkg: "", typ: $funcType([$String, sliceType$1], [ptrType], true)}, {prop: "Invoke", name: "Invoke", pkg: "", typ: $funcType([sliceType$1], [ptrType], true)}, {prop: "New", name: "New", pkg: "", typ: $funcType([sliceType$1], [ptrType], true)}, {prop: "Bool", name: "Bool", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "String", name: "String", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Int", name: "Int", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Int64", name: "Int64", pkg: "", typ: $funcType([], [$Int64], false)}, {prop: "Uint64", name: "Uint64", pkg: "", typ: $funcType([], [$Uint64], false)}, {prop: "Float", name: "Float", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "Interface", name: "Interface", pkg: "", typ: $funcType([], [$emptyInterface], false)}, {prop: "Unsafe", name: "Unsafe", pkg: "", typ: $funcType([], [$Uintptr], false)}];
 	ptrType$1.methods = [{prop: "Error", name: "Error", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Stack", name: "Stack", pkg: "", typ: $funcType([], [$String], false)}];
-	Object.init([{prop: "Bool", name: "Bool", pkg: "", typ: $funcType([], [$Bool], false)}, {prop: "Call", name: "Call", pkg: "", typ: $funcType([$String, sliceType$1], [Object], true)}, {prop: "Delete", name: "Delete", pkg: "", typ: $funcType([$String], [], false)}, {prop: "Float", name: "Float", pkg: "", typ: $funcType([], [$Float64], false)}, {prop: "Get", name: "Get", pkg: "", typ: $funcType([$String], [Object], false)}, {prop: "Index", name: "Index", pkg: "", typ: $funcType([$Int], [Object], false)}, {prop: "Int", name: "Int", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "Int64", name: "Int64", pkg: "", typ: $funcType([], [$Int64], false)}, {prop: "Interface", name: "Interface", pkg: "", typ: $funcType([], [$emptyInterface], false)}, {prop: "Invoke", name: "Invoke", pkg: "", typ: $funcType([sliceType$1], [Object], true)}, {prop: "Length", name: "Length", pkg: "", typ: $funcType([], [$Int], false)}, {prop: "New", name: "New", pkg: "", typ: $funcType([sliceType$1], [Object], true)}, {prop: "Set", name: "Set", pkg: "", typ: $funcType([$String, $emptyInterface], [], false)}, {prop: "SetIndex", name: "SetIndex", pkg: "", typ: $funcType([$Int, $emptyInterface], [], false)}, {prop: "String", name: "String", pkg: "", typ: $funcType([], [$String], false)}, {prop: "Uint64", name: "Uint64", pkg: "", typ: $funcType([], [$Uint64], false)}, {prop: "Unsafe", name: "Unsafe", pkg: "", typ: $funcType([], [$Uintptr], false)}]);
-	container.init([{prop: "Object", name: "", pkg: "", typ: Object, tag: ""}]);
-	Error.init([{prop: "Object", name: "", pkg: "", typ: Object, tag: ""}]);
+	Object.init([{prop: "object", name: "object", pkg: "github.com/gopherjs/gopherjs/js", typ: ptrType, tag: ""}]);
+	Error.init([{prop: "Object", name: "", pkg: "", typ: ptrType, tag: ""}]);
 	$pkg.$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $r, $s = 0; var $init_js = function() { while (true) { switch ($s) { case 0:
@@ -2183,8 +2189,10 @@ $packages["runtime"] = (function() {
 	};
 	NotSupportedError.prototype.Error = function() { return this.$val.Error(); };
 	init = function() {
-		var e;
-		$js = $packages[$externalize("github.com/gopherjs/gopherjs/js", $String)];
+		var e, jsPkg;
+		jsPkg = $packages[$externalize("github.com/gopherjs/gopherjs/js", $String)];
+		$jsObjectPtr = jsPkg.Object.ptr;
+		$jsErrorPtr = jsPkg.Error.ptr;
 		$throwRuntimeError = (function(msg) {
 			var msg;
 			$panic(new errorString(msg));
@@ -2237,16 +2245,17 @@ $packages["runtime"] = (function() {
 	};
 	return $pkg;
 })();
-$packages["github.com/rusco/qunit"] = (function() {
-	var $pkg = {}, js, QUnitAssert, sliceType, funcType, funcType$1, funcType$2, log, Test, Ok, Start, AsyncTest, Expect, Module, ModuleLifecycle;
+$packages["github.com/fabioberger/qunit"] = (function() {
+	var $pkg = {}, js, QUnitAssert, sliceType, funcType, ptrType, funcType$1, funcType$2, log, Test, Ok, Start, AsyncTest, Expect, Module, ModuleLifecycle;
 	js = $packages["github.com/gopherjs/gopherjs/js"];
-	QUnitAssert = $pkg.QUnitAssert = $newType(0, $kindStruct, "qunit.QUnitAssert", "QUnitAssert", "github.com/rusco/qunit", function(Object_) {
+	QUnitAssert = $pkg.QUnitAssert = $newType(0, $kindStruct, "qunit.QUnitAssert", "QUnitAssert", "github.com/fabioberger/qunit", function(Object_) {
 		this.$val = this;
 		this.Object = Object_ !== undefined ? Object_ : null;
 	});
 	sliceType = $sliceType($emptyInterface);
 	funcType = $funcType([], [$emptyInterface], false);
-	funcType$1 = $funcType([js.Object], [], false);
+	ptrType = $ptrType(js.Object);
+	funcType$1 = $funcType([ptrType], [], false);
 	funcType$2 = $funcType([], [], false);
 	log = function(i) {
 		var i, obj;
@@ -2261,7 +2270,7 @@ $packages["github.com/rusco/qunit"] = (function() {
 	QUnitAssert.ptr.prototype.Equal = function(actual, expected, message) {
 		var actual, expected, message, qa;
 		qa = $clone(this, QUnitAssert);
-		log(new sliceType([new $String("---> qunit: "), actual, expected, new $js.container.ptr(qa.Object.equal($externalize(actual, $emptyInterface), $externalize(expected, $emptyInterface), $externalize(message, $String))), new $Bool(!!(qa.Object.equal($externalize(actual, $emptyInterface), $externalize(expected, $emptyInterface), $externalize(message, $String))))]));
+		log(new sliceType([new $String("---> qunit: "), actual, expected, new $jsObjectPtr(qa.Object.equal($externalize(actual, $emptyInterface), $externalize(expected, $emptyInterface), $externalize(message, $String))), new $Bool(!!(qa.Object.equal($externalize(actual, $emptyInterface), $externalize(expected, $emptyInterface), $externalize(message, $String))))]));
 		return !!(qa.Object.equal($externalize(actual, $emptyInterface), $externalize(expected, $emptyInterface), $externalize(message, $String)));
 	};
 	QUnitAssert.prototype.Equal = function(actual, expected, message) { return this.$val.Equal(actual, expected, message); };
@@ -2359,8 +2368,8 @@ $packages["github.com/rusco/qunit"] = (function() {
 		}
 		return $global.QUnit.module($externalize(name, $String), o);
 	};
-	QUnitAssert.methods = [{prop: "DeepEqual", name: "DeepEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "Equal", name: "Equal", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotDeepEqual", name: "NotDeepEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotEqual", name: "NotEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotPropEqual", name: "NotPropEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "PropEqual", name: "PropEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotStrictEqual", name: "NotStrictEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "Ok", name: "Ok", pkg: "", typ: $funcType([$emptyInterface, $String], [$Bool], false)}, {prop: "StrictEqual", name: "StrictEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "ThrowsExpected", name: "ThrowsExpected", pkg: "", typ: $funcType([funcType, $emptyInterface, $String], [js.Object], false)}, {prop: "Throws", name: "Throws", pkg: "", typ: $funcType([funcType, $String], [js.Object], false)}];
-	QUnitAssert.init([{prop: "Object", name: "", pkg: "", typ: js.Object, tag: ""}]);
+	QUnitAssert.methods = [{prop: "DeepEqual", name: "DeepEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "Equal", name: "Equal", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotDeepEqual", name: "NotDeepEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotEqual", name: "NotEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotPropEqual", name: "NotPropEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "PropEqual", name: "PropEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "NotStrictEqual", name: "NotStrictEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "Ok", name: "Ok", pkg: "", typ: $funcType([$emptyInterface, $String], [$Bool], false)}, {prop: "StrictEqual", name: "StrictEqual", pkg: "", typ: $funcType([$emptyInterface, $emptyInterface, $String], [$Bool], false)}, {prop: "ThrowsExpected", name: "ThrowsExpected", pkg: "", typ: $funcType([funcType, $emptyInterface, $String], [ptrType], false)}, {prop: "Throws", name: "Throws", pkg: "", typ: $funcType([funcType, $String], [ptrType], false)}];
+	QUnitAssert.init([{prop: "Object", name: "", pkg: "", typ: ptrType, tag: ""}]);
 	$pkg.$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $r, $s = 0; var $init_qunit = function() { while (true) { switch ($s) { case 0:
@@ -2607,9 +2616,9 @@ $packages["strconv"] = (function() {
 	return $pkg;
 })();
 $packages["main"] = (function() {
-	var $pkg = {}, js, qunit, strconv, Scenario, funcType, main;
+	var $pkg = {}, qunit, js, strconv, Scenario, funcType, main;
+	qunit = $packages["github.com/fabioberger/qunit"];
 	js = $packages["github.com/gopherjs/gopherjs/js"];
-	qunit = $packages["github.com/rusco/qunit"];
 	strconv = $packages["strconv"];
 	Scenario = $pkg.Scenario = $newType(0, $kindStruct, "main.Scenario", "Scenario", "main", function() {
 		this.$val = this;
@@ -2667,8 +2676,8 @@ $packages["main"] = (function() {
 	$pkg.$init = function() {
 		$pkg.$init = function() {};
 		/* */ var $r, $s = 0; var $init_main = function() { while (true) { switch ($s) { case 0:
-		$r = js.$init($BLOCKING); /* */ $s = 1; case 1: if ($r && $r.$blocking) { $r = $r(); }
-		$r = qunit.$init($BLOCKING); /* */ $s = 2; case 2: if ($r && $r.$blocking) { $r = $r(); }
+		$r = qunit.$init($BLOCKING); /* */ $s = 1; case 1: if ($r && $r.$blocking) { $r = $r(); }
+		$r = js.$init($BLOCKING); /* */ $s = 2; case 2: if ($r && $r.$blocking) { $r = $r(); }
 		$r = strconv.$init($BLOCKING); /* */ $s = 3; case 3: if ($r && $r.$blocking) { $r = $r(); }
 		main();
 		/* */ } return; } }; $init_main.$blocking = true; return $init_main;
