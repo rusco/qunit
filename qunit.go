@@ -8,7 +8,7 @@ type QUnitAssert struct {
 }
 
 type DoneCallbackObject struct {
-	js.Object
+	*js.Object
 	Failed  int `js:"failed"`
 	Passed  int `js:"passed"`
 	Total   int `js:"total"`
@@ -16,7 +16,7 @@ type DoneCallbackObject struct {
 }
 
 type LogCallbackObject struct {
-	js.Object
+	*js.Object
 	result   bool       `js:"result"`
 	actual   *js.Object `js:"actual"`
 	expected *js.Object `js:"expected"`
@@ -25,12 +25,12 @@ type LogCallbackObject struct {
 }
 
 type ModuleStartCallbackObject struct {
-	js.Object
+	*js.Object
 	name string `js:"name"`
 }
 
 type ModuleDoneCallbackObject struct {
-	js.Object
+	*js.Object
 	name   string `js:"name"`
 	failed int    `js:"failed"`
 	passed int    `js:"passed"`
@@ -38,7 +38,7 @@ type ModuleDoneCallbackObject struct {
 }
 
 type TestDoneCallbackObject struct {
-	js.Object
+	*js.Object
 	name     string `js:"name"`
 	module   string `js:"module"`
 	failed   int    `js:"failed"`
@@ -48,7 +48,7 @@ type TestDoneCallbackObject struct {
 }
 
 type TestStartCallbackObject struct {
-	js.Object
+	*js.Object
 	name   string `js:"name"`
 	module string `js:"module"`
 }
@@ -141,14 +141,14 @@ func Begin(callbackFn func() interface{}) *js.Object {
 }
 func Done(callbackFn func(details DoneCallbackObject) interface{}) *js.Object {
 	t := js.Global.Get("QUnit").Call("done", func(e *js.Object) {
-		callbackFn(DoneCallbackObject{Object: *e})
+		callbackFn(DoneCallbackObject{Object: e})
 	})
 	return t
 }
 func Log(callbackFn func(details LogCallbackObject) interface{}) *js.Object {
 	/*
 		2do:
-		t := js.Global.Get("QUnit").Call("log", func(e js.Object) {
+		t := js.Global.Get("QUnit").Call("log", func(e *js.Object) {
 			callbackFn(LogCallbackObject{Object: e})
 		})
 	*/
@@ -157,7 +157,7 @@ func Log(callbackFn func(details LogCallbackObject) interface{}) *js.Object {
 }
 func ModuleDone(callbackFn func(details ModuleDoneCallbackObject) interface{}) *js.Object {
 	t := js.Global.Get("QUnit").Call("moduleDone", func(e *js.Object) {
-		callbackFn(ModuleDoneCallbackObject{Object: *e})
+		callbackFn(ModuleDoneCallbackObject{Object: e})
 	})
 	return t
 }
@@ -169,13 +169,13 @@ func ModuleStart(callbackFn func(name string) interface{}) *js.Object {
 }
 func TestDone(callbackFn func(details TestDoneCallbackObject) interface{}) *js.Object {
 	t := js.Global.Get("QUnit").Call("testDone", func(e *js.Object) {
-		callbackFn(TestDoneCallbackObject{Object: *e})
+		callbackFn(TestDoneCallbackObject{Object: e})
 	})
 	return t
 }
 func TestStart(callbackFn func(details TestStartCallbackObject) interface{}) *js.Object {
 	t := js.Global.Get("QUnit").Call("testStart", func(e *js.Object) {
-		callbackFn(TestStartCallbackObject{Object: *e})
+		callbackFn(TestStartCallbackObject{Object: e})
 	})
 	return t
 }
@@ -220,7 +220,7 @@ func ModuleLifecycle(name string, lc Lifecycle) *js.Object {
 }
 
 type Raises struct {
-	js.Object
+	*js.Object
 	Raises *js.Object `js:"raises"`
 }
 
