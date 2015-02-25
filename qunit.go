@@ -185,7 +185,7 @@ func AsyncTestExpected(name string, expected interface{}, testFn func() interfac
 	})
 	return t
 }
-func AsyncTest(name string, testFn func() *js.Object) *js.Object {
+func AsyncTest(name string, testFn func() interface{}) *js.Object {
 	t := js.Global.Get("QUnit").Call("asyncTest", name, func() {
 		testFn()
 	})
