@@ -62,7 +62,6 @@ func (qa QUnitAssert) DeepEqual(actual interface{}, expected interface{}, messag
 }
 
 func (qa QUnitAssert) Equal(actual interface{}, expected interface{}, message string) bool {
-	log("---> qunit: ", actual, expected, qa.Call("equal", actual, expected, message), qa.Call("equal", actual, expected, message).Bool())
 	return qa.Call("equal", actual, expected, message).Bool()
 }
 
