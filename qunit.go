@@ -53,10 +53,6 @@ type TestStartCallbackObject struct {
 	module string `js:"module"`
 }
 
-func log(i ...interface{}) {
-	js.Global.Get("console").Call("log", i...)
-}
-
 func (qa QUnitAssert) DeepEqual(actual interface{}, expected interface{}, message string) bool {
 	return qa.Call("deepEqual", actual, expected, message).Bool()
 }
