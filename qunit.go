@@ -97,6 +97,14 @@ func (qa QUnitAssert) Throws(block func() interface{}, message string) *js.Objec
 	return qa.Call("throws", block, message)
 }
 
+func (qa QUnitAssert) Async() func() {
+	// Use a closure to wrap around the async javascript object
+	asyncObj := qa.Call("async")
+	return func() {
+		asyncObj.Invoke()
+	}
+}
+
 //start QUnit static methods
 func Test(name string, testFn func(QUnitAssert)) {
 	js.Global.Get("QUnit").Call("test", name, func(e *js.Object) {
